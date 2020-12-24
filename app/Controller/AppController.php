@@ -31,5 +31,43 @@ App::uses('Controller', 'Controller');
  * @link		https://book.cakephp.org/2.0/en/controllers.html#the-app-controller
  */
 class AppController extends Controller {
-	public $components = array( 'DebugKit.Toolbar');
+	//public $components = array('DebugKit.Toolbar');
+	public $components = array(
+		'DebugKit.Toolbar' => array('panels' => array('history' => false)),
+		'Flash',
+		'Auth' => array(
+			//ログイン後のページ指定
+			'loginRedirect' => array(
+				'controller' => 'posts',
+				'action' => 'index'
+			),
+			//ログイン後のページ指定
+			'logoutRedirect' => array(
+				'controller' => 'posts',
+				'action' => 'index'
+			),
+			'authenticate' => array(
+				'Form' => array(
+					'passwordHasher' => 'Blowfish',
+					'fields' => array(
+						'username' => 'mail',
+						'password' => 'password'
+					)
+				)
+			),
+			'authorize' => array('Controller'),
+			'loginAction' => array(
+				'controller' => 'users',
+				'action' => 'login'
+			)
+		)
+	);
+	//ログインしていなくてもindex,viewを見れるようにする
+	public function beforeFilter() {
+		$this->Auth->allow('index', 'view');
+		$this->set('auth', $this->Auth);
+	}
+	public function isAuthorized($user) {
+		return $this->redirect(array('controller' => 'posts', 'action' => 'index'));
+	}
 }
