@@ -31,7 +31,8 @@ App::uses('Controller', 'Controller');
  * @link		https://book.cakephp.org/2.0/en/controllers.html#the-app-controller
  */
 class AppController extends Controller {
-	//public $components = array('DebugKit.Toolbar');
+	//ヘルパーの読み込み
+	public $helpers = array('Html', 'Form', 'Flash');
 	public $components = array(
 		'DebugKit.Toolbar' => array('panels' => array('history' => false)),
 		'Flash',
@@ -46,28 +47,33 @@ class AppController extends Controller {
 				'controller' => 'posts',
 				'action' => 'index'
 			),
+			//POSTされたデータの認証
 			'authenticate' => array(
 				'Form' => array(
 					'passwordHasher' => 'Blowfish',
 					'fields' => array(
+						//認証をmailに変更
 						'username' => 'mail',
 						'password' => 'password'
 					)
 				)
 			),
 			'authorize' => array('Controller'),
+			//認証されていない時のリダイレクト先
 			'loginAction' => array(
 				'controller' => 'users',
-				'action' => 'login'
-			)
+				'action' => 'add'
+			),
+			//'authError' => '閲覧権限がありません'
 		)
 	);
 	//ログインしていなくてもindex,viewを見れるようにする
 	public function beforeFilter() {
 		$this->Auth->allow('index', 'view');
 		$this->set('auth', $this->Auth);
+		//$this->Auth->authError  = __('閲覧権限がありません。ログインしてください', true);
 	}
 	public function isAuthorized($user) {
-		return $this->redirect(array('controller' => 'posts', 'action' => 'index'));
+		return false;
 	}
 }

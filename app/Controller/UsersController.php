@@ -1,40 +1,40 @@
 <?php
+//クラスを初めて使用する際に適切にファイルを見つける
 App::uses('Appcontroller', 'Controller');
 class UsersController extends AppController {
 	//コントローラーのアクション前に実行
 	public function beforeFilter() {
+		//AppControllerからの継承
 		parent::beforeFilter();
-		//ユーザー自身による登録とログアウトを許可する
-		$this->Auth->allow('add', 'logout');
+		//ユーザー自身による登録とログアウト、ログインを許可する
+		$this->Auth->allow('add', 'logout', 'login');
 		$user = $this->Auth->user();
 		//ログイン中add,loginを拒否
 		if (!is_null($user)) {
 			//ログイン中は登録拒否
-			$this->Auth->deny('add');
-			//loginActionの指定になっているのでリダイレクトで回避
-			if ($this->action === 'login') {
+			$this->Auth->deny('add', 'login');
+			//直リンクでloginを指定した場合
+			if (in_array($this->action, array('add', 'login'))) {
+				//loginActionの指定になっているのでリダイレクトで回避
+				$this->Flash->error(__('無効な操作です'));
 				return $this->redirect(array('controller' => 'posts', 'action' => 'index'));
+			}
+		} else {
+			if ($this->action === 'logout') {
+			$this->Flash->error(__('loginしていません'));
+			return $this->redirect(array('controller' => 'posts', 'action' => 'index'));
 			}
 		}
 	}
-	//データベースから情報を取得？set()する必要があるのか？
-	public function index() {
-		//find()を使用した場合デフォルトでjoinが行われる
-		//$recursive = -1でテーブル単体を検索できる、０はデフォルト
-		$this->User->recursive = 0;
-	}
-	public function view($id = null) {
-		$this->User->id = $id;
-		if (!$this->User->exists()) {
-			throw new NotFoundException(__('ユーザーが存在しません'));
-		}
-		//idが'$id'番目のデータを取して$userに格納
-		$this->set('user', $this->User->findById($id));
-	}
+	//ユーザー登録
 	public function add() {
+		//登録ボタンが押されたら
 		if ($this->request->is('post')) {
+			//モデル状態の初期化
 			$this->User->create();
+			//usersテーブルにデータを保存出来たら
 			if ($this->User->save($this->request->data)) {
+				//__call()は$_SESSIONにメッセージを追加する
 				$this->Flash->success(__('ユーザー情報を保存しました'));
 				return $this->redirect(array('controller' => 'users', 'action' => 'login'));
 			}
@@ -43,37 +43,7 @@ class UsersController extends AppController {
 			);
 		}
 	}
-	public function edit($id = null) {
-		$this->User->id = $id;
-		if (!$this->User->exists()) {
-			throw new NotFoundException(__('無効なユーザーです'));
-		}
-		if ($this->request->is('post') || $this->request->is('put')) {
-			if ($this->User->save($this->request->data)) {
-				$this->Flash->success(__('ユーザー情報を編集しました'));
-				return $this->redirect(array('action' => 'index'));
-			}
-			$this->Flash->error(
-				__('編集できませんでした、もう一度お試しください')
-			);
-		} else {
-			$this->request->data = $this->User->findById($id);
-			unset($this->request->data['User']['password']);
-		}
-	}
-	public function delete($id = null) {
-		$this->request->allowMethod('post');
-		$this->User->id = $id;
-		if (!$this->User->exists()) {
-			throw new NotFoundException(__('無効なユーザーです'));
-		}
-		if ($this->User->delete()) {
-			$this->Flash->success(__('ユーザー情報を削除しました'));
-			return $this->redirect(array('action' => 'index'));
-		}
-		$this->Flash->error(__('ユーザー情報を削除できませんでした'));
-		return $this->redirect(array('action' => 'index'));
-	}
+	//ログイン処理
 	public function login() {
 		if ($this->request->is('post')) {
 			if ($this->Auth->login()) {
