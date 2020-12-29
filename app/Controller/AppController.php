@@ -35,6 +35,7 @@ class AppController extends Controller {
 	public $helpers = array('Html', 'Form', 'Flash');
 	public $components = array(
 		'DebugKit.Toolbar' => array('panels' => array('history' => false)),
+		'Security',
 		'Flash',
 		'Auth' => array(
 			//ログイン後のページ指定
@@ -64,14 +65,18 @@ class AppController extends Controller {
 				'controller' => 'users',
 				'action' => 'add'
 			),
-			//'authError' => '閲覧権限がありません'
 		)
 	);
 	//ログインしていなくてもindex,viewを見れるようにする
 	public function beforeFilter() {
 		$this->Auth->allow('index', 'view');
 		$this->set('auth', $this->Auth);
-		//$this->Auth->authError  = __('閲覧権限がありません。ログインしてください', true);
+		//ディベロッパーツールによるPOST値改ざん時blackhhole()へ
+		$this->Security->blackHoleCallback = 'blackhole';
+	}
+	public function blackhole() {
+		$this->Flash->error(__('無効な操作です'));
+		return $this->redirect(array('controller' => 'posts', 'action' => 'index'));
 	}
 	public function isAuthorized($user) {
 		return false;

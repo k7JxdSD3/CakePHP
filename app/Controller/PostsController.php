@@ -74,8 +74,6 @@ class PostsController extends AppController {
 	public function beforeFilter() {
 		//AppControllerからの継承
 		parent::beforeFilter();
-		//ディベロッパーツールによるPOST値改ざん時blackhhole()へ
-		$this->Security->blackHoleCallback = 'blackhole';
 		//未ログイン時
 		$user = $this->Auth->user();
 		if (is_null($user)) {
@@ -89,10 +87,6 @@ class PostsController extends AppController {
 				return $this->redirect(array('action' => 'index'));
 			}
 		}
-	}
-	public function blackhole() {
-		$this->Flash->error(__('無効な操作です'));
-		return $this->redirect(array('action' => 'index'));
 	}
 	public function isAuthorized($user) {
 		if ($this->action === 'add') {
@@ -110,6 +104,4 @@ class PostsController extends AppController {
 		}
 		return parent::isAuthorized($user);
 	}
-	//フォーム改ざん対策
-	public $components = array('Security');
 }
