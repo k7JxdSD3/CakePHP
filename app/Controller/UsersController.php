@@ -1,20 +1,22 @@
 <?php
 //クラスを初めて使用する際に適切にファイルを見つける
 App::uses('Appcontroller', 'Controller');
+//メール送信のためのクラス読み込み
+App::uses('CakeEmail', 'Network/Email');
 class UsersController extends AppController {
 	//コントローラーのアクション前に実行
 	public function beforeFilter() {
 		//AppControllerからの継承
 		parent::beforeFilter();
 		//ユーザー自身による登録とログアウト、ログインを許可する
-		$this->Auth->allow('add', 'logout', 'login');
+		$this->Auth->allow('add', 'logout', 'login', 'password');
 		$user = $this->Auth->user();
 		//ログイン中add,loginを拒否
 		if (!is_null($user)) {
 			//ログイン中は登録拒否
-			$this->Auth->deny('add', 'login');
+			$this->Auth->deny('add', 'login', 'password');
 			//直リンクでloginを指定した場合
-			if (in_array($this->action, array('add', 'login'))) {
+			if (in_array($this->action, array('add', 'login', 'password'))) {
 				//loginActionの指定になっているのでリダイレクトで回避
 				$this->Flash->error(__('無効な操作です'));
 				return $this->redirect(array('controller' => 'posts', 'action' => 'index'));
@@ -25,6 +27,21 @@ class UsersController extends AppController {
 			return $this->redirect(array('controller' => 'posts', 'action' => 'index'));
 			}
 		}
+		//URLを押したときの処理
+		//if ($this->request->is('get')) {
+			if (isset($_GET['key'])) {
+				//シークレットキーと時間をもとにデータベースからidを取得
+				$user = $this->User->find('first', array(
+					'conditions' => array(
+						'User.secret_key' => $_GET['key'],
+						'User.reset_time >=' => date('Y-m-d H:i:s', strtotime('-30 minutes'))
+					),
+					'fields' => array('User.id')
+				));
+				//ViewでUserのidを元に画面を入り変えるために取得
+				$this->set('user', $user);
+			}
+		//}
 	}
 	//ユーザー情報画面
 	public function view($id = null) {
@@ -139,6 +156,84 @@ class UsersController extends AppController {
 		}
 		$this->Flash->error(__('Logoutできませんでした'));
 		return $this->redirect(array('controller' => 'posts', 'action' => 'index'));
+	}
+	//パスワードのリセット
+	public function password() {
+		//URLを押したときの処理
+		if ($this->request->is('get')) {
+			if (isset($_GET['key'])) {
+				//シークレットキーと時間をもとにデータベースからidを取得
+				$user = $this->User->find('first', array(
+					'conditions' => array(
+						'User.secret_key' => $_GET['key'],
+						'User.reset_time >=' => date('Y-m-d H:i:s', strtotime('-30 minutes'))
+					),
+					'fields' => array('User.id')
+				));
+				////ViewでUserのidを元に画面を入り変えるために取得
+				//$this->set('user', $user);
+			}
+		}
+		//ViewでUserのidを元に画面を入り変えるために取得
+		if (!empty($user)) {
+			$this->set('user', $user);
+		}
+		//passwordを更新する処理
+		if (!empty($this->request->data['User']['password']) && $this->request->is('post')) {
+			if (!empty($this->request->data['User']['id'])) {
+				//更新するフィールドを指定
+				$this->User->id = $this->request->data['User']['id'];
+				//password更新とsecret_key,reset_timeの無効か
+				$data = array(
+					'password' => $this->request->data['User']['password'],
+					'reset_time' => null,
+					'secret_key' => null
+				);
+				//データベースへ保存
+				if ($this->User->save($data)) {
+					$this->Flash->success(__('パスワードの再設定が完了いたしました'));
+				}
+			} else {
+				$this->Flash->error(__('不正なアクセスです。再度お試しください'));
+			}
+		}
+		if ($this->request->is('post') || $this->request->is('put')) {
+			if (!empty($this->request->data['User']['mail'])) {
+				//再発行用URLのメールを送る処理
+				$mail = $this->request->data['User']['mail'];
+				$this->Flash->success(__('再発行用URLをメールアドレス宛に送信しました'));
+				//メールアドレスをもとにデータベースからid,mailを取得
+				$user = $this->User->find('first', array(
+					'conditions' => array('User.mail' => $mail),
+					'fields' => array('User.id', 'User.mail')
+				));
+				if (!empty($user['User']['id'])) {
+					//更新するフィールドを指定
+					$this->User->id = $user['User']['id'];
+					//シークレットキー生成
+					$url = 'https://procir-study.site/Taguchi405/cakephp/users/password?key=';
+					$secret_key = md5(uniqid(mt_rand(), true));
+					$url .= $secret_key;
+					//メールを送信処理
+					$message = '下記のURLからパスワードを再設定してください' . "\r\n" . 'URLの有効期限は３０分です' . "\r\n" . $url;
+					$email = new CakeEmail();
+					$email->from(array('hxh.feitan@gmail.com' => '簡易ブログ'));
+					$email->to($mail);
+					$email->subject('簡易ブログパスワード再設定案内');
+					if ($email->send($message)) {
+						$reset_time = date('Y-m-d H:i:s');
+						//配列に格納
+						$data = array(
+							'reset_time' => $reset_time,
+							'secret_key' => $secret_key
+						);
+						//データベースへ保存
+						$this->User->save($data);
+					}
+				}
+				//return $this->redirect(array('controller' => 'users', 'action' => 'login'));
+			}
+		}
 	}
 	public function isAuthorized($user) {
 		if ($this->action === 'add') {
