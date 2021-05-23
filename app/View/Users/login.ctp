@@ -11,12 +11,18 @@ echo $this->Form->input('password');
 ?>
 </fieldset>
 <?php echo $this->Form->end(__('Login')); ?>
+<?php
+echo $this->Html->link(
+	'パスワードを忘れた方はこちら',
+	array('controller' => 'users', 'action' => 'password')
+);
+?>
 </div>
 <?php
-	echo $this->Html->link(
-		'新規会員登録',
-		array('controller' => 'users', 'action' => 'add')
-	);
+echo $this->Html->link(
+	'新規会員登録',
+	array('controller' => 'users', 'action' => 'add')
+);
 ?>
 <br>
 <?php

@@ -2,6 +2,7 @@
 App::uses('AppModel', 'Model');
 App::uses('BlowfishPasswordHasher', 'Controller/Component/Auth');
 class User extends AppModel {
+	public $useTable = 'cake_users';
 	public $validate = array(
 		'username' => array(
 			'required' => array(

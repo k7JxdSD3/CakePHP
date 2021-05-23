@@ -1,9 +1,8 @@
 <div class="users form">
 <?php echo $this->Form->create('User'); ?>
 <fieldset>
-<?php var_dump($user); ?>
 <legend><?php echo __('パスワードの再設定'); ?></legend>
-<?php if (!isset($user['User']['id'])) : ?>
+<?php if (!isset($_GET['key'])) : ?>
 <?php
 echo $this->Form->input('mail', array(
 	'between' => '登録されているメールアドレスを入力してください'
@@ -16,7 +15,9 @@ echo $this->Form->input('mail', array(
 echo $this->Form->input('password', array(
 	'between' => 'passwordは5～15文字でお願いします'
 ));
-echo $this->Form->hidden('id', array('value' => $user['User']['id']));
+if (!empty($user['User']['id'])) {
+	echo $this->Form->hidden('id', array('value' => $user['User']['id']));
+}
 ?>
 <?php echo $this->Form->end('再設定する'); ?>
 <?php endif; ?>
