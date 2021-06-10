@@ -213,13 +213,13 @@ class UsersController extends AppController {
 						//更新するフィールドを指定
 						$this->User->id = $user['User']['id'];
 						//シークレットキー生成
-						$url = 'https://procir-study.site/Taguchi405/cakephp/users/password?key=';
+						$url = 'https:///scogineer.mydns.jp/cakephp/users/password?key=';
 						$secret_key = md5(uniqid(mt_rand(), true));
 						$url .= $secret_key;
 						//メール送信処理
 						$message = '下記のURLからパスワードを再設定してください' . "\r\n" . 'URLの有効期限は３０分です' . "\r\n" . $url;
-						$email = new CakeEmail();
-						$email->from(array('hxh.feitan@gmail.com' => '簡易ブログ'));
+						$email = new CakeEmail('gmail');
+						$email->from(array('hiroto.taguchi0205@gmail.com' => '簡易ブログ'));
 						$email->to($mail);
 						$email->subject('簡易ブログパスワード再設定案内');
 						if ($email->send($message)) {

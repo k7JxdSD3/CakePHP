@@ -89,11 +89,11 @@ class EmailConfig {
 	);
 	public $gmail = array(
 		'host' => 'ssl://smtp.gmail.com',
-		'port' => '465',
-		'username' =>'hxh.feitan@gmail.com',
-		'password' => 'h054104645',
+		'port' => 465,
+		'username' =>'hiroto.taguchi0205@gmail.com',
+		'password' => 'ozfzpjiiyxcgphzj',
 		'transport' => 'Smtp',
-		'tls' => true
+		//'tls' => true
 	);
 
 }
